@@ -36,7 +36,7 @@
 
 .NOTES
     Projet : PS-VHDX (gamme PS-* de CL SASU)
-    Version : 1.1
+    Version : 1.1.1
     Compatible Windows PowerShell 5.1 et PowerShell 7.
 #>
 [CmdletBinding(DefaultParameterSetName = 'Convert')]
@@ -51,7 +51,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $AppName  = 'PS-VHDX'
-$Version  = '1.1'
+$Version  = '1.1.1'
 $Label    = 'Convertir en VHDX (PS-VHDX)'
 $MenuKeys = @("HKCU:\Software\Classes\Directory\shell\$AppName", "HKCU:\Software\Classes\Directory\Background\shell\$AppName")
 $InstDir  = Join-Path $env:LOCALAPPDATA $AppName
@@ -1205,6 +1205,26 @@ if ($Uninstall) {
     Uninstall-ClassicMenu
     Uninstall-ModernMenu
     Write-Host "Entrées de menu retirées. Le script reste dans $InstDir." -ForegroundColor Green
+    return
+}
+# v1.1.1 : lancé sans paramètre (double-clic, « Exécuter avec PowerShell »),
+# le script affiche son mode d'emploi et propose d'agir, au lieu d'une erreur.
+if (-not $Path) {
+    Write-Host "PS-VHDX $Version : convertit un dossier en disque virtuel VHDX." -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "  .\PS-VHDX.ps1 -Install           ajoute « $Label » au clic droit des dossiers"
+    Write-Host "  .\PS-VHDX.ps1 -Path <dossier>    convertit un dossier en <dossier>.vhdx"
+    Write-Host "  .\PS-VHDX.ps1 -Uninstall         retire les entrées de menu"
+    Write-Host "  Get-Help .\PS-VHDX.ps1 -Full     aide complète"
+    if (-not $NoPause -and [Environment]::UserInteractive) {
+        Write-Host ""
+        $r = (Read-Host "I pour installer les menus, le chemin d'un dossier pour le convertir, ou Entrée pour quitter").Trim().Trim('"')
+        if ($r -match '^[iI]$') {
+            & $PSCommandPath -Install
+            Read-Host "`nEntrée pour fermer" | Out-Null
+        }
+        elseif ($r) { & $PSCommandPath -Path $r }
+    }
     return
 }
 Invoke-Conversion
